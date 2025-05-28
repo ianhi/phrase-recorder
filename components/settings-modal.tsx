@@ -233,7 +233,7 @@ export function SettingsModal({ isOpen, settings, onClose, onUpdateSettings }: S
               </div>
 
               {settings.autoTrimEnabled && (
-                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200 space-y-4">
                   <div className="text-xs text-green-700">
                     <div className="font-medium mb-1">Auto-trim features:</div>
                     <ul className="space-y-1 list-disc list-inside">
@@ -242,6 +242,28 @@ export function SettingsModal({ isOpen, settings, onClose, onUpdateSettings }: S
                       <li>Shows waveform preview with trim points</li>
                       <li>Manual adjustment available in zoom view</li>
                     </ul>
+                  </div>
+
+                  {/* Relative Silence Threshold Setting */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-green-800">
+                      Silence Threshold: {(settings.relativeSilenceFraction * 100).toFixed(1)}% of peak
+                    </Label>
+                    <Slider
+                      value={[settings.relativeSilenceFraction]}
+                      onValueChange={([value]) => onUpdateSettings({ relativeSilenceFraction: value })}
+                      max={0.1} // Max threshold at 10% of peak
+                      min={0.001} // Min threshold at 0.1% of peak
+                      step={0.001} // 0.1% step
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-green-600">
+                      <span>Very Quiet (0.1%)</span>
+                      <span>Louder (10%)</span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Determines the volume level relative to the loudest part of the audio below which silence is detected for trimming. A lower percentage detects quieter silence.
+                    </p>
                   </div>
                 </div>
               )}
@@ -504,6 +526,14 @@ export function SettingsModal({ isOpen, settings, onClose, onUpdateSettings }: S
                 <div className="font-medium text-gray-700">Auto-trim</div>
                 <div className="text-gray-600">{settings.autoTrimEnabled ? "Enabled" : "Disabled"}</div>
               </div>
+              {settings.autoTrimEnabled && (
+                <div className="p-2 bg-gray-50 rounded">
+                  <div className="font-medium text-gray-700">Trim Threshold</div>
+                  <div className="text-gray-600">
+                    {(settings.relativeSilenceFraction * 100).toFixed(1)}% of peak
+                  </div>
+                </div>
+              )}
               <div className="p-2 bg-gray-50 rounded">
                 <div className="font-medium text-gray-700">Auto-download</div>
                 <div className="text-gray-600">{settings.autoDownloadEnabled ? "Individual files" : "Manual only"}</div>

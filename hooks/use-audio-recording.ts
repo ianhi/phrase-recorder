@@ -102,20 +102,27 @@ export function useAudioRecording() {
       mediaRecorder.start(100) // Collect data every 100ms for better quality
       setIsRecording(true)
       console.log("🎤 Recording started with settings:", options)
-    } catch (error) {
-      console.error("❌ Error starting recording:", error)
+    } catch (error: unknown) {
+      console.error("❌ Error starting recording:", error);
 
-      let errorMessage = "Error accessing microphone. "
-      if (error.name === "NotAllowedError") {
-        errorMessage += "Please grant microphone permission and try again."
-      } else if (error.name === "NotFoundError") {
-        errorMessage += "No microphone found. Please connect a microphone and try again."
+      let errorMessage = "Error accessing microphone. ";
+      if (error instanceof Error) {
+        errorMessage += error.message;
+        if (error.name === "NotAllowedError") {
+          errorMessage = "Please grant microphone permission and try again.";
+        } else if (error.name === "NotFoundError") {
+          errorMessage = "No microphone found. Please connect a microphone and try again.";
+        } else {
+          errorMessage += " Please check your microphone settings and try again.";
+        }
+      } else if (typeof error === 'string') {
+        errorMessage += error;
       } else {
-        errorMessage += "Please check your microphone settings and try again."
+        errorMessage += " Please check your microphone settings and try again.";
       }
 
-      alert(errorMessage)
-      setIsRecording(false)
+      alert(errorMessage);
+      setIsRecording(false);
     }
   }, [])
 
@@ -128,9 +135,9 @@ export function useAudioRecording() {
   }, [isRecording])
 
   const processAudio = useCallback(
-    async (autoTrimEnabled: boolean) => {
+    async (autoTrimEnabled: boolean, relativeSilenceFraction: number) => { // Add relativeSilenceFraction parameter
       if (!audioBlob || processingRef.current || isProcessed) {
-        return { blob: audioBlob, trimData }
+        return { blob: audioBlob, trimData };
       }
 
       processingRef.current = true
@@ -140,10 +147,10 @@ export function useAudioRecording() {
       if (autoTrimEnabled) {
         setIsTrimming(true)
         try {
-          console.log("✂️ Starting audio trim processing...")
-          const result = await trimAudioSilence(audioBlob)
-          finalBlob = result.blob
-          finalTrimData = result.trimData
+          console.log("✂️ Starting audio trim processing with relative silence fraction:", relativeSilenceFraction);
+          const result = await trimAudioSilence(audioBlob, relativeSilenceFraction); // Pass the parameter
+          finalBlob = result.blob;
+          finalTrimData = result.trimData;
           setTrimData(finalTrimData)
 
           // Validate the trimmed audio

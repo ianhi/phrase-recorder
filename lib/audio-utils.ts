@@ -83,11 +83,17 @@ export const validateAudioBlob = async (blob: Blob): Promise<{ isValid: boolean;
       isValid: validation.isValid,
       details: `Blob: ${blob.size} bytes, ${blob.type} | ${validation.details}`,
     }
-  } catch (error) {
+  } catch (error: unknown) {
+    let errorMessage = "An unknown error occurred";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
     return {
       isValid: false,
-      details: `Failed to decode audio blob: ${error.message}`,
-    }
+      details: `Failed to decode audio blob: ${errorMessage}`,
+    };
   }
 }
 
@@ -194,21 +200,33 @@ export const audioBufferToWav = (buffer: AudioBuffer): Blob => {
   let minSample = 0
   let nonZeroSamples = 0
 
+  // Optional: Apply gain reduction before processing
+  const gainReduction = 0.9; // Adjust this value (e.g., 0.9 for -1dB)
+  console.log(`Applying gain reduction: ${gainReduction}`);
+
   for (let i = 0; i < length; i++) {
     for (let channel = 0; channel < numberOfChannels; channel++) {
-      const sample = buffer.getChannelData(channel)[i]
+      let sample = buffer.getChannelData(channel)[i];
 
-      // Track audio statistics
-      if (Math.abs(sample) > 0.001) nonZeroSamples++
-      if (sample > maxSample) maxSample = sample
-      if (sample < minSample) minSample = sample
+      // Apply gain reduction
+      sample *= gainReduction;
+
+      // Track audio statistics (after gain reduction)
+      if (Math.abs(sample) > 0.001) nonZeroSamples++;
+      if (sample > maxSample) maxSample = sample;
+      if (sample < minSample) minSample = sample;
+
+      // Log sample value before clamping if it exceeds 1.0
+      if (Math.abs(sample) > 1.0) {
+        console.warn(`⚠️ Sample value exceeds 1.0 before clamping: ${sample}`);
+      }
 
       // Clamp sample to [-1, 1] and convert to 16-bit integer
-      const clampedSample = Math.max(-1, Math.min(1, sample))
-      const intSample = Math.round(clampedSample * 0x7fff)
+      const clampedSample = Math.max(-1, Math.min(1, sample));
+      const intSample = Math.round(clampedSample * 0x7fff);
 
-      view.setInt16(offset, intSample, true)
-      offset += 2
+      view.setInt16(offset, intSample, true);
+      offset += 2;
     }
   }
 
@@ -240,10 +258,13 @@ export const audioBufferToWav = (buffer: AudioBuffer): Blob => {
   return blob
 }
 
-// Enhanced audio trimming with comprehensive validation
-export const trimAudioSilence = async (audioBlob: Blob): Promise<{ blob: Blob; trimData: TrimData }> => {
+// Enhanced audio trimming with comprehensive validation and configurable relative silence threshold
+export const trimAudioSilence = async (
+  audioBlob: Blob,
+  relativeSilenceFraction: number = 0.01 // Add optional parameter with default
+): Promise<{ blob: Blob; trimData: TrimData }> => {
   try {
-    console.log("🎵 Starting audio trim process...")
+    console.log("🎵 Starting audio trim process with relative silence fraction:", relativeSilenceFraction);
 
     // Validate input blob
     const blobValidation = await validateAudioBlob(audioBlob)
@@ -268,9 +289,23 @@ export const trimAudioSilence = async (audioBlob: Blob): Promise<{ blob: Blob; t
 
     console.log("✅ AudioBuffer validation passed:", bufferValidation.details)
 
-    const channelData = audioBuffer.getChannelData(0)
-    const sampleRate = audioBuffer.sampleRate
-    const silenceThreshold = 0.01 // Increased threshold for better detection
+    const channelData = audioBuffer.getChannelData(0);
+    const sampleRate = audioBuffer.sampleRate;
+
+    // Calculate maximum amplitude for relative thresholding
+    let maxAmplitude = 0;
+    for (let i = 0; i < channelData.length; i++) {
+      const sample = Math.abs(channelData[i]);
+      if (sample > maxAmplitude) {
+        maxAmplitude = sample;
+      }
+    }
+
+    // Define relative silence threshold (e.g., 1% of max amplitude)
+    const silenceThreshold = maxAmplitude * relativeSilenceFraction;
+
+    console.log("📊 Calculated max amplitude:", maxAmplitude.toFixed(6));
+    console.log("📊 Using relative silence threshold:", silenceThreshold.toFixed(6));
 
     const originalWaveform = generateWaveformData(audioBuffer)
     console.log("📊 Generated original waveform data")
@@ -286,7 +321,9 @@ export const trimAudioSilence = async (audioBlob: Blob): Promise<{ blob: Blob; t
 
     // Find end of audio (last non-silent sample)
     let endSample = channelData.length
-    for (let i = channelData.length - 1; i >= 0; i--) {
+    // TODO: make sure that if we don't end on silence this doesn't erroneously
+    // find a much too early spot.
+    for (let i = channelData.length - 1; i >= startSample; i--) {
       if (Math.abs(channelData[i]) > silenceThreshold) {
         endSample = Math.min(channelData.length, i + Math.floor(sampleRate * 0.05)) // 50ms buffer
         break
@@ -309,8 +346,16 @@ export const trimAudioSilence = async (audioBlob: Blob): Promise<{ blob: Blob; t
 
     // Validate trim points
     if (endSample <= startSample || trimmedDuration < 0.1) {
-      console.warn("⚠️ Invalid trim points or audio too short, returning original")
-      await audioContext.close()
+      console.warn("⚠️ Invalid trim points or audio too short, returning original. Details:", {
+        startSample,
+        endSample,
+        trimmedDuration: trimmedDuration.toFixed(3),
+        originalDuration: audioBuffer.duration.toFixed(3),
+        silenceThreshold: silenceThreshold.toFixed(6), // Log the calculated threshold
+        maxAmplitude: maxAmplitude.toFixed(6), // Log max amplitude
+        relativeSilenceFraction, // Log the fraction used
+      });
+      await audioContext.close();
       return {
         blob: audioBlob,
         trimData: {
@@ -320,7 +365,7 @@ export const trimAudioSilence = async (audioBlob: Blob): Promise<{ blob: Blob; t
           trimEnd: audioBuffer.duration,
           originalAudioBuffer: audioBuffer,
         },
-      }
+      };
     }
 
     // Create trimmed buffer

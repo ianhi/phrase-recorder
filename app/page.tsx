@@ -684,7 +684,7 @@ export default function BanglaRecorder() {
       if (audioBlob && !isTrimming && !isProcessed && !isRecording) {
         if (debugMode) console.log("🎵 Processing audio for word:", currentWord?.id)
 
-        const result = await processAudio(settings.autoTrimEnabled)
+        const result = await processAudio(settings.autoTrimEnabled, settings.relativeSilenceFraction); // Pass relativeSilenceFraction
 
         if (result?.trimData) {
           setManualTrimStart(result.trimData.trimStart)

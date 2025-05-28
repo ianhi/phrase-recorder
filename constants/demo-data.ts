@@ -138,4 +138,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autoRecordDelay: 100,
   keyboardShortcutsEnabled: true,
   shortcuts: DEFAULT_SHORTCUTS,
+  relativeSilenceFraction: 0.05
 }

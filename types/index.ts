@@ -45,6 +45,7 @@ export interface AppSettings {
   autoPlayEnabled: boolean
   autoPlayDelay: number
   autoTrimEnabled: boolean
+  relativeSilenceFraction: number; // Relative volume threshold for auto-trim (0.0 to 1.0)
   autoDownloadEnabled: boolean
   autoRecordNextEnabled: boolean
   autoRecordDelay: number
