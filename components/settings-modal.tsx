@@ -268,6 +268,122 @@ export function SettingsModal({ isOpen, settings, onClose, onUpdateSettings }: S
                 </div>
               )}
 
+              <Separator className="my-4" /> {/* Add separator */}
+
+              {/* Extra Audio Processing Section */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium">Enable Extra Audio Processing</Label>
+                  <p className="text-xs text-gray-500">Apply processing like compression after trimming</p>
+                </div>
+                <Switch
+                  checked={settings.extraProcessingEnabled}
+                  onCheckedChange={(checked) => onUpdateSettings({ extraProcessingEnabled: checked })}
+                />
+              </div>
+
+              {settings.extraProcessingEnabled && (
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-4">
+                  <div className="text-xs text-blue-700">
+                    <div className="font-medium mb-1">Extra Processing Options:</div>
+                    <ul className="space-y-1 list-disc list-inside">
+                      <li>Apply dynamic range compression to even out volume</li>
+                      <li>More options may be added in the future</li>
+                    </ul>
+                  </div>
+
+                  {/* Dynamic Range Compression Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <Label className="text-sm font-medium text-blue-800">Enable Compression</Label>
+                        <p className="text-xs text-gray-500">Reduce the dynamic range of the audio</p>
+                      </div>
+                      <Switch
+                        checked={settings.compressionEnabled}
+                        onCheckedChange={(checked) => onUpdateSettings({ compressionEnabled: checked })}
+                      />
+                    </div>
+
+                    {settings.compressionEnabled && (
+                      <div className="space-y-4 pl-4">
+                        {/* Compression Threshold */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-blue-800">
+                            Threshold: {settings.compressionThreshold.toFixed(1)} dB
+                          </Label>
+                          <Slider
+                            value={[settings.compressionThreshold]}
+                            onValueChange={([value]) => onUpdateSettings({ compressionThreshold: value })}
+                            max={0}
+                            min={-60}
+                            step={0.5}
+                            className="w-full"
+                          />
+                          <p className="text-xs text-gray-500">
+                            The level above which compression is applied. Lower values mean more of the signal is compressed.
+                          </p>
+                        </div>
+
+                        {/* Compression Ratio */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-blue-800">
+                            Ratio: {settings.compressionRatio.toFixed(1)}:1
+                          </Label>
+                          <Slider
+                            value={[settings.compressionRatio]}
+                            onValueChange={([value]) => onUpdateSettings({ compressionRatio: value })}
+                            max={20}
+                            min={1}
+                            step={0.5}
+                            className="w-full"
+                          />
+                          <p className="text-xs text-gray-500">
+                            Determines how much the signal is reduced above the threshold. A ratio of 4:1 means a signal 4dB over the threshold will be reduced to 1dB over.
+                          </p>
+                        </div>
+
+                        {/* Compression Attack */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-blue-800">
+                            Attack: {(settings.compressionAttack * 1000).toFixed(1)} ms
+                          </Label>
+                          <Slider
+                            value={[settings.compressionAttack]}
+                            onValueChange={([value]) => onUpdateSettings({ compressionAttack: value })}
+                            max={0.1} // Max 100ms
+                            min={0.001} // Min 1ms
+                            step={0.001} // 1ms step
+                            className="w-full"
+                          />
+                          <p className="text-xs text-gray-500">
+                            How quickly the compressor reacts to signals exceeding the threshold. Shorter times react faster.
+                          </p>
+                        </div>
+
+                        {/* Compression Release */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-blue-800">
+                            Release: {(settings.compressionRelease * 1000).toFixed(1)} ms
+                          </Label>
+                          <Slider
+                            value={[settings.compressionRelease]}
+                            onValueChange={([value]) => onUpdateSettings({ compressionRelease: value })}
+                            max={1} // Max 1000ms
+                            min={0.05} // Min 50ms
+                            step={0.01} // 10ms step
+                            className="w-full"
+                          />
+                          <p className="text-xs text-gray-500">
+                            How quickly the compressor stops reducing the signal once it falls below the threshold. Longer times result in a smoother release.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label className="text-sm font-medium">Auto-record next word</Label>
@@ -343,11 +459,11 @@ export function SettingsModal({ isOpen, settings, onClose, onUpdateSettings }: S
                     <li>
                       <strong>Format:</strong> High-quality WAV files for best compatibility
                     </li>
-                  </ul>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
           <Separator />
 
@@ -533,6 +649,38 @@ export function SettingsModal({ isOpen, settings, onClose, onUpdateSettings }: S
                     {(settings.relativeSilenceFraction * 100).toFixed(1)}% of peak
                   </div>
                 </div>
+              )}
+              <div className="p-2 bg-gray-50 rounded">
+                <div className="font-medium text-gray-700">Extra Processing</div>
+                <div className="text-gray-600">{settings.extraProcessingEnabled ? "Enabled" : "Disabled"}</div>
+              </div>
+              {settings.extraProcessingEnabled && (
+                <>
+                  <div className="p-2 bg-gray-50 rounded">
+                    <div className="font-medium text-gray-700">Compression</div>
+                    <div className="text-gray-600">{settings.compressionEnabled ? "Enabled" : "Disabled"}</div>
+                  </div>
+                  {settings.compressionEnabled && (
+                    <>
+                      <div className="p-2 bg-gray-50 rounded">
+                        <div className="font-medium text-gray-700">Comp. Threshold</div>
+                        <div className="text-gray-600">{settings.compressionThreshold.toFixed(1)} dB</div>
+                      </div>
+                      <div className="p-2 bg-gray-50 rounded">
+                        <div className="font-medium text-gray-700">Comp. Ratio</div>
+                        <div className="text-gray-600">{settings.compressionRatio.toFixed(1)}:1</div>
+                      </div>
+                      <div className="p-2 bg-gray-50 rounded">
+                        <div className="font-medium text-gray-700">Comp. Attack</div>
+                        <div className="text-gray-600">{(settings.compressionAttack * 1000).toFixed(1)} ms</div>
+                      </div>
+                      <div className="p-2 bg-gray-50 rounded">
+                        <div className="font-medium text-gray-700">Comp. Release</div>
+                        <div className="text-gray-600">{(settings.compressionRelease * 1000).toFixed(1)} ms</div>
+                      </div>
+                    </>
+                  )}
+                </>
               )}
               <div className="p-2 bg-gray-50 rounded">
                 <div className="font-medium text-gray-700">Auto-download</div>

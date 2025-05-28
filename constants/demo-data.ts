@@ -133,10 +133,16 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autoPlayEnabled: true,
   autoPlayDelay: 200,
   autoTrimEnabled: true,
+  relativeSilenceFraction: 0.05, // Default relative silence threshold (5%)
+  extraProcessingEnabled: false, // Default to extra processing disabled
+  compressionEnabled: false, // Default to compression disabled
+  compressionThreshold: -24, // Default compression threshold (dBFS)
+  compressionRatio: 4, // Default compression ratio (4:1)
+  compressionAttack: 0.003, // Default compression attack time (seconds)
+  compressionRelease: 0.25, // Default compression release time (seconds)
   autoDownloadEnabled: false,
   autoRecordNextEnabled: true,
   autoRecordDelay: 100,
   keyboardShortcutsEnabled: true,
   shortcuts: DEFAULT_SHORTCUTS,
-  relativeSilenceFraction: 0.05
-}
+};
