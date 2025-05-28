@@ -221,30 +221,54 @@ export function SettingsModal({ isOpen, settings, onClose, onUpdateSettings }: S
             </div>
 
             <div className="space-y-4 pl-7">
+              {/* Auto record -next word */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium">Auto-record next word</Label>
+                  <p className="text-xs text-gray-500">Automatically start recording after saving current word</p>
+                </div>
+                <Switch
+                  checked={settings.autoRecordNextEnabled}
+                  onCheckedChange={(checked) => onUpdateSettings({ autoRecordNextEnabled: checked })}
+                />
+              </div>
+
+              {settings.autoRecordNextEnabled && (
+                <div className="space-y-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                  <Label className="text-sm font-medium text-red-800">
+                    Auto-record delay: {settings.autoRecordDelay}ms
+                  </Label>
+                  <Slider
+                    value={[settings.autoRecordDelay]}
+                    onValueChange={([value]) => onUpdateSettings({ autoRecordDelay: value })}
+                    max={1000}
+                    min={50}
+                    step={25}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-red-600">
+                    <span>50ms</span>
+                    <span>1 second</span>
+                  </div>
+                  <div className="text-xs text-red-700">
+                    <ul className="space-y-1 list-disc list-inside">
+                      <li>Same delay used for re-record button</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label className="text-sm font-medium">Auto-trim silence</Label>
-                  <p className="text-xs text-gray-500">Automatically remove silence from recordings</p>
+                  <p className="text-xs text-gray-500">Automatically remove silence from start and end of recordings</p>
                 </div>
                 <Switch
                   checked={settings.autoTrimEnabled}
                   onCheckedChange={(checked) => onUpdateSettings({ autoTrimEnabled: checked })}
                 />
               </div>
-
               {settings.autoTrimEnabled && (
                 <div className="p-3 bg-green-50 rounded-lg border border-green-200 space-y-4">
-                  <div className="text-xs text-green-700">
-                    <div className="font-medium mb-1">Auto-trim features:</div>
-                    <ul className="space-y-1 list-disc list-inside">
-                      <li>Removes silence from start and end</li>
-                      <li>Preserves 0.1s buffer for natural sound</li>
-                      <li>Shows waveform preview with trim points</li>
-                      <li>Manual adjustment available in zoom view</li>
-                    </ul>
-                  </div>
-
-                  {/* Relative Silence Threshold Setting */}
                   <div className="space-y-3">
                     <Label className="text-sm font-medium text-green-800">
                       Silence Threshold: {(settings.relativeSilenceFraction * 100).toFixed(1)}% of peak
@@ -265,8 +289,20 @@ export function SettingsModal({ isOpen, settings, onClose, onUpdateSettings }: S
                       Determines the volume level relative to the loudest part of the audio below which silence is detected for trimming. A lower percentage detects quieter silence.
                     </p>
                   </div>
-                </div>
+                  </div>
               )}
+
+              {/* {settings.autoTrimEnabled && (
+                  <div className="text-xs text-green-700">
+                    <div className="font-medium mb-1">Auto-trim features:</div>
+                    <ul className="space-y-1 list-disc list-inside">
+                      <li>Preserves 0.1s buffer for natural sound</li>
+                      <li>Shows waveform preview with trim points</li>
+                      <li>Manual adjustment available in zoom view</li>
+                    </ul>
+                  </div>
+
+                  {/* Relative Silence Threshold Setting */}
 
               <Separator className="my-4" /> {/* Add separator */}
 
@@ -384,44 +420,7 @@ export function SettingsModal({ isOpen, settings, onClose, onUpdateSettings }: S
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label className="text-sm font-medium">Auto-record next word</Label>
-                  <p className="text-xs text-gray-500">Automatically start recording after saving current word</p>
-                </div>
-                <Switch
-                  checked={settings.autoRecordNextEnabled}
-                  onCheckedChange={(checked) => onUpdateSettings({ autoRecordNextEnabled: checked })}
-                />
-              </div>
-
-              {settings.autoRecordNextEnabled && (
-                <div className="space-y-3 p-3 bg-red-50 rounded-lg border border-red-200">
-                  <Label className="text-sm font-medium text-red-800">
-                    Auto-record delay: {settings.autoRecordDelay}ms
-                  </Label>
-                  <Slider
-                    value={[settings.autoRecordDelay]}
-                    onValueChange={([value]) => onUpdateSettings({ autoRecordDelay: value })}
-                    max={1000}
-                    min={50}
-                    step={25}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-red-600">
-                    <span>50ms</span>
-                    <span>1 second</span>
-                  </div>
-                  <div className="text-xs text-red-700">
-                    <div className="font-medium mb-1">Auto-record features:</div>
-                    <ul className="space-y-1 list-disc list-inside">
-                      <li>Starts recording automatically after saving</li>
-                      <li>Same delay used for re-record button</li>
-                      <li>Allows seamless word-to-word recording</li>
-                    </ul>
-                  </div>
-                </div>
-              )}
+              
             </div>
           </div>
 

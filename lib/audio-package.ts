@@ -10,7 +10,7 @@ export class AudioPackageCreator {
     let offset = 0
 
     for (const [filename, content] of Object.entries(files)) {
-      const data = typeof content === "string" ? new TextEncoder().encode(content) : content
+      const data: Uint8Array = typeof content === "string" ? new TextEncoder().encode(content) : content
       const filenameBytes = new TextEncoder().encode(filename)
 
       console.log(`📁 Adding file to ZIP: ${filename} (${data.length} bytes)`)
@@ -176,7 +176,8 @@ export class AudioPackageCreator {
             console.error(`❌ Error processing audio for ${filename}:`, error)
 
             // Create error file
-            const errorInfo = `# Audio Processing Error\n\nFile: ${filename}\nWord: ${word.bangla} (${word.english})\nError: ${error.message}\nTimestamp: ${new Date(recording.timestamp).toISOString()}\n\nThis audio file could not be processed and was not included in the package.`
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorInfo = `# Audio Processing Error\n\nFile: ${filename}\nWord: ${word.bangla} (${word.english})\nError: ${errorMessage}\nTimestamp: ${new Date(recording.timestamp).toISOString()}\n\nThis audio file could not be processed and was not included in the package.`
             files[`audio/ERROR_${word.id}.txt`] = errorInfo
           }
         }
@@ -202,7 +203,8 @@ export class AudioPackageCreator {
       return zipBlob
     } catch (error) {
       console.error("❌ Error creating audio package:", error)
-      throw new Error(`Failed to create audio package: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to create audio package: ${errorMessage}`)
     }
   }
 
