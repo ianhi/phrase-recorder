@@ -56,7 +56,7 @@ export default function BanglaRecorder() {
   const [sessionStartTime, setSessionStartTime] = useState<number>(Date.now())
   const [sessionTime, setSessionTime] = useState<number>(0)
   const [autoplayPending, setAutoplayPending] = useState(false)
-  const [autoplayAttempted, setAutoplayAttempted] = useState(false)
+  const [autoplayAttempted, setAutoplayAttempted] = useState<boolean>(false)
   const [lastProcessedAudioId, setLastProcessedAudioId] = useState<string | null>(null)
   const [testMode, setTestMode] = useState(false)
   const [testResults, setTestResults] = useState<
@@ -282,10 +282,11 @@ export default function BanglaRecorder() {
     })
 
     // Test 5: Autoplay state consistency
-    const test5Passed = !autoplayPending || (audioBlob && isProcessed)
+    const test5Passed = !autoplayPending || (audioBlob !== null && isProcessed)
     results.push({
       test: "Autoplay State Consistency",
-      passed: test5Passed ? "✅ Autoplay state is consistent with audio state" : "❌ Autoplay state inconsistent",
+      passed: test5Passed,
+      details: test5Passed ? "✅ Autoplay state is consistent with audio state" : "❌ Autoplay state inconsistent", // This line was already correct, no change needed here.
       timestamp,
     })
 
@@ -853,7 +854,7 @@ export default function BanglaRecorder() {
     } catch (error) {
       console.error("Error creating audio package:", error)
       alert(
-        `Error creating audio package: ${error.message}\n\nPlease try again or check the browser console for more details.`,
+        `Error creating audio package: ${error instanceof Error ? error.message : String(error)}\n\nPlease try again or check the browser console for more details.`,
       )
     } finally {
       setIsExporting(false)
@@ -955,8 +956,8 @@ export default function BanglaRecorder() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 relative">
+      <Card className="w-full max-w-md absolute top-5 left-1/2 -translate-x-1/2">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-800">Bangla Voice Recorder</CardTitle>
           <CardDescription>
@@ -1039,29 +1040,63 @@ export default function BanglaRecorder() {
                 {/* Simple Waveform Trimmer - directly embedded */}
                 {audioBlob && !isRecording && !isTrimming && isProcessed && (
                   <div className="w-full">
-                    <audio ref={audioRef} src={audioUrl} className="hidden" preload="auto" />
+                    {/* Conditionally render audio and waveform trimmer when audio is processed and URL exists */}
+                    {audioBlob && !isRecording && !isTrimming && isProcessed && audioUrl && (
+                      <>
+                        <audio ref={audioRef} src={audioUrl} className="hidden" preload="auto" />
 
-                    {/* Direct Simple Waveform Trimmer */}
-                    {trimData && settings.autoTrimEnabled && (
-                      <div className="p-3 bg-white rounded-lg border">
-                        <SimpleWaveformTrimmer
-                          waveformData={trimData.originalWaveform}
-                          trimStart={manualTrimStart}
-                          trimEnd={manualTrimEnd}
-                          currentTime={currentTime}
-                          isPlaying={isPlaying}
-                          onTrimChange={handleTrimChange}
-                        />
-                      </div>
+                        {/* Direct Simple Waveform Trimmer */}
+                        {trimData && settings.autoTrimEnabled && (
+                          <div className="p-3 bg-white rounded-lg border">
+                            <SimpleWaveformTrimmer
+                              waveformData={trimData.originalWaveform}
+                              trimStart={manualTrimStart}
+                              trimEnd={manualTrimEnd}
+                              currentTime={currentTime}
+                              isPlaying={isPlaying}
+                              onTrimChange={handleTrimChange}
+                            />
+                          </div>
+                        )}
+
+                        {/* Placeholder when auto-trim is disabled but audio exists */}
+                        {!trimData && settings.autoTrimEnabled === false && (
+                          <div className="p-3 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                            <div className="text-center text-gray-500 text-sm">
+                              <div className="mb-2">Audio recorded successfully</div>
+                              <div className="text-xs">Enable auto-trim in settings to see waveform trimmer</div>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
 
-                    {/* Placeholder when auto-trim is disabled but audio exists */}
-                    {!trimData && settings.autoTrimEnabled === false && (
-                      <div className="p-3 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                        <div className="text-center text-gray-500 text-sm">
-                          <div className="mb-2">Audio recorded successfully</div>
-                          <div className="text-xs">Enable auto-trim in settings to see waveform trimmer</div>
-                        </div>
+                    {/* Empty placeholder during recording and processing states */}
+                    {(isRecording || isTrimming || !audioBlob || !isProcessed) && (
+                      <div className="w-full h-[120px] flex items-center justify-center">
+                        {isRecording && (
+                          <div className="text-center text-gray-500">
+                            <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                            <div className="text-sm">Recording in progress...</div>
+                          </div>
+                        )}
+
+                        {(isTrimming || (audioBlob && !isProcessed)) && (
+                          <div className="text-center text-gray-500">
+                            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                            <div className="text-sm">Processing audio...</div>
+                            {autoplayPending && (
+                              <div className="text-xs text-blue-600 mt-1">Autoplay will start after processing...</div>
+                            )}
+                          </div>
+                        )}
+
+                        {!audioBlob && !isRecording && !isTrimming && (
+                          <div className="text-center text-gray-400">
+                            <div className="text-sm">Waveform preview will appear here</div>
+                            <div className="text-xs mt-1">after recording audio</div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
