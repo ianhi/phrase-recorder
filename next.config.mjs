@@ -12,8 +12,8 @@ const nextConfig = {
     unoptimized: true
   },
   // // Configure for GitHub Pages deployment
-  basePath: process.env.NODE_ENV === 'production' ? '/phrase-recorder' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/phrase-recorder/' : '',
+  basePath: '/phrase-recorder',
+  assetPrefix: '/phrase-recorder/',
   
   // Ensure static export works properly
   experimental: {
