@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // output: 'export',
+  output: 'export',
   trailingSlash: true,
   eslint: {
     ignoreDuringBuilds: true,
@@ -11,9 +11,9 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
-  // Configure for GitHub Pages deployment
-  basePath: process.env.NODE_ENV === 'production' ? '/bangla-recorder' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/bangla-recorder/' : '',
+  // // Configure for GitHub Pages deployment
+  basePath: process.env.NODE_ENV === 'production' ? '/phrase-recorder' : '',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/phrase-recorder/' : '',
   
   // Ensure static export works properly
   experimental: {
